@@ -10,11 +10,11 @@ export const getOpinions = async (req, res) => {
   }
 };
 
-export const getOpinionById = async (req, res) => {
+export const getOpinionByEmail = async (req, res) => {
   try {
     const response = await Opinion.findOne({
       where: {
-        id: req.params.id,
+        email: req.params.email,
       },
     });
     res.status(200).json(response);
@@ -46,10 +46,23 @@ export const updateOpinion = async (req, res) => {
   try {
     await Opinion.update(req.body, {
       where: {
-        id: req.params.id,
+        email: req.params.email,
       },
     });
     res.status(200).json({ msg: "User Updated" });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const deleteOpinion = async (req, res) => {
+  try {
+    await Opinion.destroy({
+      where: {
+        id: req.params.id,
+      },
+    });
+    res.status(200).json({ msg: "User Deleted" });
   } catch (error) {
     console.log(error.message);
   }
