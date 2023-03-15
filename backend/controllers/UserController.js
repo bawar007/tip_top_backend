@@ -59,7 +59,7 @@ export const deleteOpinion = async (req, res) => {
   try {
     await Opinion.destroy({
       where: {
-        id: req.params.id,
+        email: req.params.id,
       },
     });
     res.status(200).json({ msg: "User Deleted" });

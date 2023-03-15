@@ -26,6 +26,7 @@ export const Users = db.define(
     phone_number: DataTypes.INTEGER,
     imie: DataTypes.STRING,
     nazwisko: DataTypes.STRING,
+    project_id: DataTypes.INTEGER,
   },
   {
     freezeTableName: true,
