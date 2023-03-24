@@ -4,7 +4,6 @@ export const getOpinions = async (req, res) => {
   try {
     const response = await Opinion.findAll();
     res.status(200).json(response);
-    console.log(response + "działa");
   } catch (error) {
     console.log(error.message);
   }
@@ -27,7 +26,6 @@ export const getUsers = async (req, res) => {
   try {
     const response = await Users.findAll();
     res.status(200).json(response);
-    console.log(response + " działa");
   } catch (error) {
     console.log(error.message);
   }

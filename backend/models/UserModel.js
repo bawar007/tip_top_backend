@@ -9,14 +9,15 @@ const Opinion = db.define(
     imie: DataTypes.STRING,
     nazwisko: DataTypes.STRING,
     email: DataTypes.STRING,
-    projekt_id: DataTypes.INTEGER,
+    phone: DataTypes.INTEGER,
+    project_id: DataTypes.INTEGER,
     text: DataTypes.STRING,
     stars: DataTypes.INTEGER,
     public_data: DataTypes.STRING,
-    phone: DataTypes.INTEGER,
   },
   {
     freezeTableName: true,
+    timestamps: false,
   }
 );
 
@@ -30,6 +31,7 @@ export const Users = db.define(
   },
   {
     freezeTableName: true,
+    timestamps: false,
   }
 );
 

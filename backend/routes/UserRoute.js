@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 router.get("/opinions", getOpinions);
-router.get("/users", getUsers);
+router.get("/user", getUsers);
 router.get("/opinions/:email", getOpinionByEmail);
 router.post("/opinions", createOpinion);
 router.patch("/opinions/:email", updateOpinion);
