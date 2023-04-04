@@ -13,8 +13,10 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "heroku-self-ping": "^2.0.1",
     "mysql2": "^3.2.0",
     "pg": "^8.10.0",
-    "sequelize": "^6.29.0"
+    "sequelize": "^6.29.0",
+    "superagent": "^8.0.9"
   }
 }
