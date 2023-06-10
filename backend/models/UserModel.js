@@ -35,9 +35,16 @@ export const Users = db.define(
   }
 );
 
-export const AdminPanel = db.define("adminpanel", {
-  login: DataTypes.STRING,
-  password: DataTypes.STRING,
-});
+export const AdminPanel = db.define(
+  "adminpanel",
+  {
+    login: DataTypes.STRING,
+    password: DataTypes.STRING,
+  },
+  {
+    freezeTableName: true,
+    timestamps: false,
+  }
+);
 
 export default Opinion;
