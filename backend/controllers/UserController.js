@@ -1,4 +1,4 @@
-import Opinion, { Users } from "../models/UserModel.js";
+import Opinion, { Users, AdminPanel } from "../models/UserModel.js";
 
 export const getOpinions = async (req, res) => {
   try {
@@ -61,6 +61,15 @@ export const deleteOpinion = async (req, res) => {
       },
     });
     res.status(200).json({ msg: "User Deleted" });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const getAdminPanel = async (req, res) => {
+  try {
+    const response = await AdminPanel.findAll();
+    res.status(200).json(response);
   } catch (error) {
     console.log(error.message);
   }

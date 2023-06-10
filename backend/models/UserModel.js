@@ -35,8 +35,9 @@ export const Users = db.define(
   }
 );
 
-export default Opinion;
+export const AdminPanel = db.define("adminpanel", {
+  login: DataTypes.STRING,
+  password: DataTypes.STRING,
+});
 
-(async () => {
-  await db.sync();
-})();
+export default Opinion;
