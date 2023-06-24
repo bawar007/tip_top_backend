@@ -22,22 +22,13 @@ const Opinion = db.define(
 );
 
 export const Users = db.define(
-  "zleceniodawcy",
+  "users",
   {
     phone_number: DataTypes.INTEGER,
     imie: DataTypes.STRING,
     nazwisko: DataTypes.STRING,
     project_id: DataTypes.INTEGER,
-  },
-  {
-    freezeTableName: true,
-    timestamps: false,
-  }
-);
-
-export const AdminPanel = db.define(
-  "adminpanel",
-  {
+    role: DataTypes.INTEGER,
     login: DataTypes.STRING,
     password: DataTypes.STRING,
   },
@@ -48,3 +39,7 @@ export const AdminPanel = db.define(
 );
 
 export default Opinion;
+
+//role =
+//1001 - default user
+// 110 - admin
