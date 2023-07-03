@@ -1,9 +1,18 @@
 import Opinion, { Users } from "../models/UserModel.js";
 import fs from "node:fs";
 import path from "node:path";
+import "dotenv/config";
+import multer from "multer";
 
 export const getOpinions = async (req, res) => {
   try {
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
+
     const response = await Opinion.findAll();
     res.status(200).json(response);
   } catch (error) {
@@ -13,6 +22,12 @@ export const getOpinions = async (req, res) => {
 
 export const getOpinionByEmail = async (req, res) => {
   try {
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
     const response = await Opinion.findOne({
       where: {
         email: req.params.email,
@@ -26,6 +41,11 @@ export const getOpinionByEmail = async (req, res) => {
 
 export const getUsers = async (req, res) => {
   try {
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
     const response = await Users.findAll();
     res.status(200).json(response);
   } catch (error) {
@@ -35,6 +55,12 @@ export const getUsers = async (req, res) => {
 
 export const createOpinion = async (req, res) => {
   try {
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
     await Opinion.create(req.body);
     res.status(201).json({ msg: "User Created" });
   } catch (error) {
@@ -44,6 +70,12 @@ export const createOpinion = async (req, res) => {
 
 export const updateOpinion = async (req, res) => {
   try {
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
     await Opinion.update(req.body, {
       where: {
         email: req.params.email,
@@ -57,6 +89,12 @@ export const updateOpinion = async (req, res) => {
 
 export const deleteOpinion = async (req, res) => {
   try {
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
     await Opinion.destroy({
       where: {
         email: req.params.id,
@@ -74,6 +112,13 @@ export const deleteFiles = async (req, res) => {
 
   const filePath = `backend/uploads/${folder}/${fileName}`;
 
+  const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+  const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+  if (apiKey !== validApiKey) {
+    return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+  }
+
   fs.unlink(filePath, (err) => {
     if (err) {
       console.error("Wystąpił błąd podczas usuwania pliku:", err);
@@ -86,6 +131,12 @@ export const deleteFiles = async (req, res) => {
 
 export const getFilesStrukture = async (req, res) => {
   const uploadsPath = "backend/uploads";
+  const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+  const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+  if (apiKey !== validApiKey) {
+    return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+  }
 
   fs.readdir(uploadsPath, (err, folders) => {
     if (err) {
@@ -100,5 +151,43 @@ export const getFilesStrukture = async (req, res) => {
     });
 
     res.json({ files: filesData });
+  });
+};
+
+export const handleUpload = (req, res) => {
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
+      const uploadPath = `backend/uploads/${folder}`;
+
+      // Tworzenie folderu, jeśli nie istnieje
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      cb(null, file.originalname);
+    },
+  });
+
+  const upload = multer({ storage });
+
+  upload.array("files")(req, res, (err) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ error: "Wystąpił błąd podczas przesyłania plików." });
+    }
+
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
+
+    res.json({ message: "Plik został pomyślnie zapisany." });
   });
 };

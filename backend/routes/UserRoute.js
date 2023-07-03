@@ -8,6 +8,7 @@ import {
   deleteOpinion,
   deleteFiles,
   getFilesStrukture,
+  handleUpload,
 } from "../controllers/UserController.js";
 
 const router = express.Router();
@@ -21,5 +22,5 @@ router.delete("/opinions/:id", deleteOpinion);
 
 router.delete("/delete", deleteFiles);
 router.get("/files", getFilesStrukture);
-
+router.post("/upload", handleUpload);
 export default router;
