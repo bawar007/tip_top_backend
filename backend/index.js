@@ -2,13 +2,8 @@ import express from "express";
 import cors from "cors";
 import UserRoute from "./routes/UserRoute.js";
 import "dotenv/config";
-import jwt from "jsonwebtoken";
 
 const app = express();
-
-const PORT = Number(process.env.PROD_PORT);
-
-const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
 
 // Przykład generowania klucza JWT
 // function generateJWT(userId) {
@@ -41,6 +36,6 @@ app.use(express.json());
 app.use(UserRoute);
 app.use("/images", express.static("backend/uploads"));
 
-app.listen(PORT, () => {
+app.listen(5000, () => {
   console.log("Server up and running...");
 });
