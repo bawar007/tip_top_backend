@@ -53,6 +53,28 @@ export const getUsers = async (req, res) => {
   }
 };
 
+export const getUser = async (req, res) => {
+  const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+  const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+  if (apiKey !== validApiKey) {
+    return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+  }
+  try {
+    const response = await Users.findOne({
+      where: {
+        login: req.body.login,
+        password: req.body.password,
+      },
+    });
+    if (response === null) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
+    res.status(201).json({ msg: "User Finded", file: response });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
 export const createOpinion = async (req, res) => {
   try {
     const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
@@ -78,7 +100,7 @@ export const updateOpinion = async (req, res) => {
     }
     await Opinion.update(req.body, {
       where: {
-        email: req.params.email,
+        id: req.params.id,
       },
     });
     res.status(200).json({ msg: "User Updated" });
@@ -97,7 +119,7 @@ export const deleteOpinion = async (req, res) => {
     }
     await Opinion.destroy({
       where: {
-        email: req.params.id,
+        id: req.params.id,
       },
     });
     res.status(200).json({ msg: "User Deleted" });

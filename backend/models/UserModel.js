@@ -7,13 +7,12 @@ const Opinion = db.define(
   "opinions",
   {
     imie: DataTypes.STRING,
-    nazwisko: DataTypes.STRING,
     email: DataTypes.STRING,
-    phone: DataTypes.INTEGER,
     project_id: DataTypes.INTEGER,
     text: DataTypes.STRING,
     stars: DataTypes.INTEGER,
     public_data: DataTypes.STRING,
+    status: DataTypes.STRING,
   },
   {
     freezeTableName: true,
@@ -31,6 +30,8 @@ export const Users = db.define(
     role: DataTypes.INTEGER,
     login: DataTypes.STRING,
     password: DataTypes.STRING,
+    accesToken: DataTypes.STRING,
+    refreshToken: DataTypes.STRING,
   },
   {
     freezeTableName: true,

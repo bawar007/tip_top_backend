@@ -5,6 +5,7 @@ import {
   createOpinion,
   updateOpinion,
   getUsers,
+  getUser,
   deleteOpinion,
   deleteFiles,
   getFilesStrukture,
@@ -15,9 +16,10 @@ const router = express.Router();
 
 router.get("/opinions", getOpinions);
 router.get("/user", getUsers);
+router.post("/login", getUser);
 router.get("/opinions/:email", getOpinionByEmail);
 router.post("/opinions", createOpinion);
-router.patch("/opinions/:email", updateOpinion);
+router.patch("/opinions/:id", updateOpinion);
 router.delete("/opinions/:id", deleteOpinion);
 
 router.delete("/delete", deleteFiles);
