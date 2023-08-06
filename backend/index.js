@@ -5,25 +5,6 @@ import "dotenv/config";
 
 const app = express();
 
-// Przykład generowania klucza JWT
-// function generateJWT(userId) {
-//   const payload = {
-//     login: userId,
-//     // Dodaj inne informacje użytkownika, które chcesz zawrzeć w tokenie
-//   };
-
-//   const options = {
-//     expiresIn: "1h", // Czas ważności tokena (np. 1 godzina)
-//   };
-
-//   const token = jwt.sign(payload, validApiKey, options);
-//   return token;
-// }
-
-// const userId = "tip_top"; // Przykładowy identyfikator użytkownika
-// const jwtToken = generateJWT(userId);
-// console.log("JWT Token:", jwtToken);
-
 app.use(express.static("public"));
 
 app.use((req, res, next) => {

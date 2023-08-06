@@ -39,20 +39,6 @@ export const getOpinionByEmail = async (req, res) => {
   }
 };
 
-export const getUsers = async (req, res) => {
-  try {
-    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
-    if (apiKey !== validApiKey) {
-      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
-    }
-    const response = await Users.findAll();
-    res.status(200).json(response);
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
 export const getUser = async (req, res) => {
   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
@@ -155,7 +141,6 @@ export const getFilesStrukture = async (req, res) => {
   const uploadsPath = "backend/uploads";
   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
-
   if (apiKey !== validApiKey) {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
@@ -177,9 +162,22 @@ export const getFilesStrukture = async (req, res) => {
 };
 
 export const handleUpload = (req, res) => {
+  const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+  const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+  if (apiKey !== validApiKey) {
+    return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+  }
+
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
+
+      if (folder === "default")
+        return res
+          .status(500)
+          .json({ error: "Wystąpił błąd podczas przesyłania plików." });
+
       const uploadPath = `backend/uploads/${folder}`;
 
       // Tworzenie folderu, jeśli nie istnieje

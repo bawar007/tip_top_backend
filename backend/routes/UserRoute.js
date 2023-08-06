@@ -4,7 +4,6 @@ import {
   getOpinionByEmail,
   createOpinion,
   updateOpinion,
-  getUsers,
   getUser,
   deleteOpinion,
   deleteFiles,
@@ -15,7 +14,6 @@ import {
 const router = express.Router();
 //dd
 router.get("/opinions", getOpinions);
-router.get("/user", getUsers);
 router.post("/login", getUser);
 router.get("/opinions/:email", getOpinionByEmail);
 router.post("/opinions", createOpinion);
