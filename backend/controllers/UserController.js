@@ -33,9 +33,16 @@ export const getOpinionByEmail = async (req, res) => {
         email: req.params.email,
       },
     });
+
+    if (!response) {
+      res
+        .status(404)
+        .json({ error: "Email nie został znaleziony w bazie danych." });
+    }
+
     res.status(200).json(response);
   } catch (error) {
-    console.log(error.message);
+    console.warn(error.message);
   }
 };
 
