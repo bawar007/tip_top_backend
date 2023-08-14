@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import "dotenv/config";
 import multer from "multer";
+import jwt from "jsonwebtoken";
 
 export const getOpinions = async (req, res) => {
   try {
@@ -50,10 +51,13 @@ export const getUser = async (req, res) => {
   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
 
-  console.log(req.body.login);
   if (apiKey !== validApiKey) {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
+
+  const password = req.body.password;
+  console.log(password);
+
   try {
     const response = await Users.findOne({
       where: {
@@ -61,10 +65,46 @@ export const getUser = async (req, res) => {
       },
     });
     if (response === null) {
-      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+      return res.status(404).json({ error: "Not found" });
     }
-    res.status(201).json({ msg: "User Finded", file: response });
+
+    const userToken = jwt.sign(
+      {
+        username: response.login,
+        password: response.password,
+        role: response.role,
+        // Dodaj inne istotne informacje o użytkowniku
+      },
+      process.env.JWT_SECRET, // Sekret używany do podpisywania tokenu
+      { expiresIn: "1h" } // Czas wygaśnięcia tokenu
+    );
+
+    await Users.update(
+      { accesToken: userToken },
+      {
+        where: {
+          login: req.body.login,
+        },
+      }
+    );
+
+    res.status(201).json({ msg: "User Finded", file: response, userToken });
   } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const verifyUser = async (req, res) => {
+  const accesToken = req.headers.authorization.split(" ")[1];
+  try {
+    await Users.findOne({
+      where: {
+        accesToken: accesToken,
+      },
+    });
+    res.status(201).json({ msg: "Verify" });
+  } catch (error) {
+    res.status(401).json({ msg: "Unauthorize" });
     console.log(error.message);
   }
 };

@@ -9,6 +9,7 @@ import {
   deleteFiles,
   getFilesStrukture,
   handleUpload,
+  verifyUser,
 } from "../controllers/UserController.js";
 
 const router = express.Router();
@@ -17,6 +18,7 @@ router.get("/opinions", getOpinions);
 router.post("/login", getUser);
 router.get("/opinions/:email", getOpinionByEmail);
 router.post("/opinions", createOpinion);
+router.get("/verify", verifyUser);
 router.patch("/opinions/:id", updateOpinion);
 router.delete("/opinions/:id", deleteOpinion);
 
