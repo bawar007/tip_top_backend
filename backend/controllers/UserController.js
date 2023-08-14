@@ -49,6 +49,8 @@ export const getOpinionByEmail = async (req, res) => {
 export const getUser = async (req, res) => {
   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+  console.log(req.body.login);
   if (apiKey !== validApiKey) {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
@@ -56,7 +58,6 @@ export const getUser = async (req, res) => {
     const response = await Users.findOne({
       where: {
         login: req.body.login,
-        password: req.body.password,
       },
     });
     if (response === null) {
