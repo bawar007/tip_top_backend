@@ -4,6 +4,7 @@ import path from "node:path";
 import "dotenv/config";
 import multer from "multer";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 export const getOpinions = async (req, res) => {
   try {
@@ -55,8 +56,7 @@ export const getUser = async (req, res) => {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
 
-  const password = req.body.password;
-  console.log(password);
+  //uzyć bcrypt do sprawdzania hasła po stronie serwera i zwracania odpowiednich błędów
 
   try {
     const response = await Users.findOne({
@@ -68,27 +68,33 @@ export const getUser = async (req, res) => {
       return res.status(404).json({ error: "Not found" });
     }
 
-    const userToken = jwt.sign(
-      {
-        username: response.login,
-        password: response.password,
-        role: response.role,
-        // Dodaj inne istotne informacje o użytkowniku
-      },
-      process.env.JWT_SECRET, // Sekret używany do podpisywania tokenu
-      { expiresIn: "1h" } // Czas wygaśnięcia tokenu
-    );
+    const verify = bcrypt.compareSync(req.body.password, response.password);
 
-    await Users.update(
-      { accesToken: userToken },
-      {
-        where: {
-          login: req.body.login,
+    if (verify) {
+      const userToken = jwt.sign(
+        {
+          username: response.login,
+          password: response.password,
+          role: response.role,
+          // Dodaj inne istotne informacje o użytkowniku
         },
-      }
-    );
-
-    res.status(201).json({ msg: "User Finded", file: response, userToken });
+        process.env.JWT_SECRET, // Sekret używany do podpisywania tokenu
+        { expiresIn: "1h" } // Czas wygaśnięcia tokenu
+      );
+      await Users.update(
+        { accesToken: userToken },
+        {
+          where: {
+            login: req.body.login,
+          },
+        }
+      );
+      res
+        .status(201)
+        .json({ msg: "User Finded", userToken, role: response.role });
+    } else {
+      return res.status(404).json({ error: "Not found" });
+    }
   } catch (error) {
     console.log(error.message);
   }
