@@ -56,8 +56,6 @@ export const getUser = async (req, res) => {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
 
-  //uzyć bcrypt do sprawdzania hasła po stronie serwera i zwracania odpowiednich błędów
-
   try {
     const response = await Users.findOne({
       where: {
@@ -76,7 +74,6 @@ export const getUser = async (req, res) => {
           username: response.login,
           password: response.password,
           role: response.role,
-          // Dodaj inne istotne informacje o użytkowniku
         },
         process.env.JWT_SECRET, // Sekret używany do podpisywania tokenu
         { expiresIn: "1h" } // Czas wygaśnięcia tokenu
@@ -102,12 +99,20 @@ export const getUser = async (req, res) => {
 
 export const verifyUser = async (req, res) => {
   const accesToken = req.headers.authorization.split(" ")[1];
+  const body = jwt.verify(accesToken, process.env.JWT_SECRET);
   try {
-    await Users.findOne({
+    const user = await Users.findOne({
       where: {
+        login: body.username,
+        password: body.password,
         accesToken: accesToken,
       },
     });
+
+    if (user === null) {
+      return res.status(404).json({ msg: "not found" });
+    }
+
     res.status(201).json({ msg: "Verify" });
   } catch (error) {
     res.status(401).json({ msg: "Unauthorize" });
