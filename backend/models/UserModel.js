@@ -17,9 +17,6 @@ const Opinion = db.define(
   {
     freezeTableName: true,
     timestamps: false,
-    define: {
-      underscored: true,
-    },
   }
 );
 
@@ -39,9 +36,6 @@ export const Users = db.define(
   {
     freezeTableName: true,
     timestamps: false,
-    define: {
-      underscored: true,
-    },
   }
 );
 
