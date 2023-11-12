@@ -67,13 +67,13 @@ export const getUser = async (req, res) => {
     }
 
     // Wygeneruj sól (możesz dostosować liczbę rund)
-    const saltRounds = 10;
-    const salt = await bcrypt.genSalt(saltRounds);
+    // const saltRounds = 10;
+    // const salt = await bcrypt.genSalt(saltRounds);
 
-    // Zabezpiecz hasło przy użyciu bcrypt
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    // // Zabezpiecz hasło przy użyciu bcrypt
+    // const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-    console.log(hashedPassword);
+    // console.log(hashedPassword);
 
     const verify = bcrypt.compareSync(req.body.password, response.password);
 
