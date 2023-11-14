@@ -13,6 +13,7 @@ const Opinion = db.define(
     stars: DataTypes.INTEGER,
     public_data: DataTypes.STRING,
     status: DataTypes.STRING,
+    asnwerFromAdmin: DataTypes.STRING,
   },
   {
     freezeTableName: true,
