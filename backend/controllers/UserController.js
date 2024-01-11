@@ -108,8 +108,10 @@ export const getUser = async (req, res) => {
 
 export const verifyUser = async (req, res) => {
   const accesToken = req.headers.authorization.split(" ")[1];
-  const body = jwt.verify(accesToken, process.env.JWT_SECRET);
+  console.log(accesToken);
+  if (!accesToken) return res.status(401).json({ msg: "Unauthorize" });
   try {
+    const body = jwt.verify(accesToken, process.env.JWT_SECRET);
     const user = await Users.findOne({
       where: {
         login: body.username,
