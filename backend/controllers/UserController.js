@@ -5,6 +5,7 @@ import "dotenv/config";
 import multer from "multer";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import gm from "gm";
 
 export const getOpinions = async (req, res) => {
   try {
@@ -221,13 +222,26 @@ export const getFilesStrukture = async (req, res) => {
       return res.status(500).json({ error: "Wystąpił błąd serwera." });
     }
 
-    const filesData = folders.map((folder) => {
-      const folderPath = path.join(uploadsPath, folder);
-      const files = fs.readdirSync(folderPath);
-      return { name: folder, table: files };
-    });
+    const uploadsPath = "backend/uploads";
+    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+    if (apiKey !== validApiKey) {
+      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+    }
+    fs.readdir(uploadsPath, (err, folders) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Wystąpił błąd serwera." });
+      }
 
-    res.json({ files: filesData });
+      const filesData = folders.map((folder) => {
+        const folderPath = path.join(uploadsPath, folder);
+        const files = fs.readdirSync(folderPath);
+        return { name: folder, table: files };
+      });
+
+      res.json({ files: filesData });
+    });
   });
 };
 
@@ -243,10 +257,11 @@ export const handleUpload = (req, res) => {
     destination: (req, file, cb) => {
       const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
 
-      if (folder === "default")
+      if (folder === "default") {
         return res
           .status(500)
           .json({ error: "Wystąpił błąd podczas przesyłania plików." });
+      }
 
       const uploadPath = `backend/uploads/${folder}`;
 
@@ -264,20 +279,113 @@ export const handleUpload = (req, res) => {
 
   const upload = multer({ storage });
 
-  upload.array("files")(req, res, (err) => {
+  const uploadMiddleware = upload.array("files");
+
+  // Dodanie middleware do przetwarzania każdego przesłanego pliku
+  const processFiles = (req, res, next) => {
+    req.files.forEach((file) => {
+      // Konwersja do formatu webp
+      gm(file.path)
+        .setFormat("webp")
+        .write(file.path.replace(/\.[^.]+$/, ".webp"), (err) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({
+                error: "Wystąpił błąd podczas konwersji pliku do formatu webp.",
+              });
+          }
+        });
+
+      // Duplikowanie pierwszego pliku z rozmiarem 250x250 i dopiskiem do nazwy "_250px"
+      if (req.files.indexOf(file) === 0) {
+        gm(file.path)
+          .resize(250, 250)
+          .setFormat("webp")
+          .write(file.path.replace(/\.[^.]+$/, "_250px.webp"), (err) => {
+            if (err) {
+              return res
+                .status(500)
+                .json({
+                  error:
+                    "Wystąpił błąd podczas konwersji pliku do formatu webp (250x250).",
+                });
+            }
+          });
+      }
+    });
+
+    next();
+  };
+
+  // Wywołanie middleware do przetwarzania plików przed zapisem
+  uploadMiddleware(req, res, (err) => {
     if (err) {
       return res
         .status(500)
         .json({ error: "Wystąpił błąd podczas przesyłania plików." });
     }
 
-    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+    processFiles(req, res, () => {
+      const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+      const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
 
-    if (apiKey !== validApiKey) {
-      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
-    }
+      if (apiKey !== validApiKey) {
+        return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+      }
 
-    res.json({ message: "Plik został pomyślnie zapisany." });
+      res.json({ message: "Pliki zostały pomyślnie zapisane." });
+    });
   });
 };
+
+// export const handleUpload = (req, res) => {
+//   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+//   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+//   if (apiKey !== validApiKey) {
+//     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+//   }
+
+//   const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//       const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
+
+//       if (folder === "default")
+//         return res
+//           .status(500)
+//           .json({ error: "Wystąpił błąd podczas przesyłania plików." });
+
+//       const uploadPath = `backend/uploads/${folder}`;
+
+//       // Tworzenie folderu, jeśli nie istnieje
+//       if (!fs.existsSync(uploadPath)) {
+//         fs.mkdirSync(uploadPath, { recursive: true });
+//       }
+
+//       cb(null, uploadPath);
+//     },
+//     filename: (req, file, cb) => {
+//       cb(null, file.originalname);
+//     },
+//   });
+
+//   const upload = multer({ storage });
+
+//   upload.array("files")(req, res, (err) => {
+//     if (err) {
+//       return res
+//         .status(500)
+//         .json({ error: "Wystąpił błąd podczas przesyłania plików." });
+//     }
+
+//     const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+//     const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+//     if (apiKey !== validApiKey) {
+//       return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+//     }
+
+//     res.json({ message: "Plik został pomyślnie zapisany." });
+//   });
+// };
