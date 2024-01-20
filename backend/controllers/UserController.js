@@ -5,7 +5,7 @@ import "dotenv/config";
 import multer from "multer";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import gm from "gm";
+import sharpMulter from "sharp-multer";
 
 export const getOpinions = async (req, res) => {
   try {
@@ -19,7 +19,7 @@ export const getOpinions = async (req, res) => {
     const response = await Opinion.findAll();
     res.status(200).json(response);
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
   }
 };
 
@@ -103,13 +103,12 @@ export const getUser = async (req, res) => {
       return res.status(404).json({ error: "Not found" });
     }
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
   }
 };
 
 export const verifyUser = async (req, res) => {
   const accesToken = req.headers.authorization.split(" ")[1];
-  console.log(accesToken);
   if (!accesToken) return res.status(401).json({ msg: "Unauthorize" });
   try {
     const body = jwt.verify(accesToken, process.env.JWT_SECRET);
@@ -128,7 +127,7 @@ export const verifyUser = async (req, res) => {
     res.status(201).json({ msg: "Verify" });
   } catch (error) {
     res.status(401).json({ msg: "Unauthorize" });
-    console.log(error.message);
+    console.error(error.message);
   }
 };
 
@@ -143,7 +142,7 @@ export const createOpinion = async (req, res) => {
     await Opinion.create(req.body);
     res.status(201).json({ msg: "User Created" });
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
   }
 };
 
@@ -162,7 +161,7 @@ export const updateOpinion = async (req, res) => {
     });
     res.status(200).json({ msg: "User Updated" });
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
   }
 };
 
@@ -181,7 +180,7 @@ export const deleteOpinion = async (req, res) => {
     });
     res.status(200).json({ msg: "User Deleted" });
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
   }
 };
 
@@ -212,6 +211,7 @@ export const getFilesStrukture = async (req, res) => {
   const uploadsPath = "backend/uploads";
   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
   if (apiKey !== validApiKey) {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
@@ -222,30 +222,17 @@ export const getFilesStrukture = async (req, res) => {
       return res.status(500).json({ error: "Wystąpił błąd serwera." });
     }
 
-    const uploadsPath = "backend/uploads";
-    const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-    const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
-    if (apiKey !== validApiKey) {
-      return res.status(401).json({ error: "Nieprawidłowy klucz API." });
-    }
-    fs.readdir(uploadsPath, (err, folders) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Wystąpił błąd serwera." });
-      }
-
-      const filesData = folders.map((folder) => {
-        const folderPath = path.join(uploadsPath, folder);
-        const files = fs.readdirSync(folderPath);
-        return { name: folder, table: files };
-      });
-
-      res.json({ files: filesData });
+    const filesData = folders.map((folder) => {
+      const folderPath = path.join(uploadsPath, folder);
+      const files = fs.readdirSync(folderPath);
+      return { name: folder, table: files };
     });
+
+    res.json({ files: filesData });
   });
 };
 
-export const handleUpload = (req, res) => {
+export const handleUpload = async (req, res) => {
   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
 
@@ -253,15 +240,58 @@ export const handleUpload = (req, res) => {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
 
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
+  const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
 
-      if (folder === "default") {
+  const storage = sharpMulter({
+    destination: (req, file, callback) => {
+      if (folder === "default")
         return res
           .status(500)
           .json({ error: "Wystąpił błąd podczas przesyłania plików." });
+
+      const uploadPath = `backend/uploads/${folder}`;
+      // Tworzenie folderu, jeśli nie istnieje
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
       }
+
+      callback(null, uploadPath);
+    },
+    imageOptions: {
+      fileFormat: "webp",
+      quality: 80,
+    },
+  });
+
+  const upload = multer({ storage });
+
+  upload.array("files")(req, res, async (err) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ error: "Wystąpił błąd podczas przesyłania plików." });
+    }
+  });
+
+  return res.json({ message: "Pliki zostały dodane do serwera." });
+};
+
+export const handleUploadMini = async (req, res) => {
+  const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+  const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+  if (apiKey !== validApiKey) {
+    return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+  }
+
+  const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
+
+  const storage = sharpMulter({
+    destination: (req, file, callback) => {
+      if (folder === "default")
+        return res
+          .status(500)
+          .json({ error: "Wystąpił błąd podczas przesyłania plików." });
 
       const uploadPath = `backend/uploads/${folder}`;
 
@@ -270,122 +300,24 @@ export const handleUpload = (req, res) => {
         fs.mkdirSync(uploadPath, { recursive: true });
       }
 
-      cb(null, uploadPath);
+      callback(null, uploadPath);
     },
-    filename: (req, file, cb) => {
-      cb(null, file.originalname);
+    imageOptions: {
+      fileFormat: "webp",
+      quality: 80,
+      resize: { width: 250, height: 250, resizeMode: "cover" },
     },
   });
 
   const upload = multer({ storage });
 
-  const uploadMiddleware = upload.array("files");
-
-  // Dodanie middleware do przetwarzania każdego przesłanego pliku
-  const processFiles = (req, res, next) => {
-    req.files.forEach((file) => {
-      // Konwersja do formatu webp
-      gm(file.path)
-        .setFormat("webp")
-        .write(file.path.replace(/\.[^.]+$/, ".webp"), (err) => {
-          if (err) {
-            return res
-              .status(500)
-              .json({
-                error: "Wystąpił błąd podczas konwersji pliku do formatu webp.",
-              });
-          }
-        });
-
-      // Duplikowanie pierwszego pliku z rozmiarem 250x250 i dopiskiem do nazwy "_250px"
-      if (req.files.indexOf(file) === 0) {
-        gm(file.path)
-          .resize(250, 250)
-          .setFormat("webp")
-          .write(file.path.replace(/\.[^.]+$/, "_250px.webp"), (err) => {
-            if (err) {
-              return res
-                .status(500)
-                .json({
-                  error:
-                    "Wystąpił błąd podczas konwersji pliku do formatu webp (250x250).",
-                });
-            }
-          });
-      }
-    });
-
-    next();
-  };
-
-  // Wywołanie middleware do przetwarzania plików przed zapisem
-  uploadMiddleware(req, res, (err) => {
+  upload.array("files")(req, res, async (err) => {
     if (err) {
       return res
         .status(500)
         .json({ error: "Wystąpił błąd podczas przesyłania plików." });
     }
-
-    processFiles(req, res, () => {
-      const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-      const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
-
-      if (apiKey !== validApiKey) {
-        return res.status(401).json({ error: "Nieprawidłowy klucz API." });
-      }
-
-      res.json({ message: "Pliki zostały pomyślnie zapisane." });
-    });
   });
+
+  return res.json({ message: "Pliki zostały dodane do serwera." });
 };
-
-// export const handleUpload = (req, res) => {
-//   const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-//   const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
-
-//   if (apiKey !== validApiKey) {
-//     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
-//   }
-
-//   const storage = multer.diskStorage({
-//     destination: (req, file, cb) => {
-//       const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
-
-//       if (folder === "default")
-//         return res
-//           .status(500)
-//           .json({ error: "Wystąpił błąd podczas przesyłania plików." });
-
-//       const uploadPath = `backend/uploads/${folder}`;
-
-//       // Tworzenie folderu, jeśli nie istnieje
-//       if (!fs.existsSync(uploadPath)) {
-//         fs.mkdirSync(uploadPath, { recursive: true });
-//       }
-
-//       cb(null, uploadPath);
-//     },
-//     filename: (req, file, cb) => {
-//       cb(null, file.originalname);
-//     },
-//   });
-
-//   const upload = multer({ storage });
-
-//   upload.array("files")(req, res, (err) => {
-//     if (err) {
-//       return res
-//         .status(500)
-//         .json({ error: "Wystąpił błąd podczas przesyłania plików." });
-//     }
-
-//     const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-//     const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
-
-//     if (apiKey !== validApiKey) {
-//       return res.status(401).json({ error: "Nieprawidłowy klucz API." });
-//     }
-
-//     res.json({ message: "Plik został pomyślnie zapisany." });
-//   });
-// };

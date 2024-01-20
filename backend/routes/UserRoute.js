@@ -10,6 +10,7 @@ import {
   getFilesStrukture,
   handleUpload,
   verifyUser,
+  handleUploadMini,
 } from "../controllers/UserController.js";
 
 const router = express.Router();
@@ -25,4 +26,5 @@ router.delete("/opinions/:id", deleteOpinion);
 router.delete("/delete", deleteFiles);
 router.get("/files", getFilesStrukture);
 router.post("/upload", handleUpload);
+router.post("/uploadmini", handleUploadMini);
 export default router;

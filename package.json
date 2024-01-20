@@ -26,6 +26,8 @@
     "nodemon": "^2.0.22",
     "pg": "^8.10.0",
     "sequelize": "^6.29.0",
+    "sharp": "^0.33.2",
+    "sharp-multer": "^0.3.2",
     "superagent": "^8.0.9"
   }
 }

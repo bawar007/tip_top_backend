@@ -42,7 +42,7 @@ app.post("/send-email", (req, res) => {
   // Wyślij e-mail
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log("Error sending email:", error);
+      console.error("Error sending email:", error);
       res.status(500).send("Error sending email");
     } else {
       res.status(200).send("Email sent successfully");
