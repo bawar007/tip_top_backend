@@ -185,13 +185,14 @@ export const deleteOpinion = async (req, res) => {
 };
 
 export const deleteFiles = async (req, res) => {
-  const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
+  const folder = req.query.s || "default";
   const fileName = req.query.fileName;
 
   const filePath = `backend/uploads/${folder}/${fileName}`;
+  const folderPath = `backend/uploads/${folder}`;
 
-  const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-  const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+  const apiKey = req.headers.authorization.split(" ")[1];
+  const validApiKey = process.env.API_KEY;
 
   if (apiKey !== validApiKey) {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
@@ -200,11 +201,56 @@ export const deleteFiles = async (req, res) => {
   fs.unlink(filePath, (err) => {
     if (err) {
       console.error("Wystąpił błąd podczas usuwania pliku:", err);
-      res.status(500).json({ error: "Wystąpił błąd podczas usuwania pliku." });
-    } else {
-      res.json({ message: "Plik został pomyślnie usunięty." });
+      return res
+        .status(500)
+        .json({ error: "Wystąpił błąd podczas usuwania pliku." });
     }
+
+    // Check if the folder is empty
+    fs.readdir(folderPath, (err, files) => {
+      if (err) {
+        console.error("Wystąpił błąd podczas sprawdzania folderu:", err);
+        return res
+          .status(500)
+          .json({ error: "Wystąpił błąd podczas sprawdzania folderu." });
+      }
+
+      // If the folder is empty, remove it
+      if (files.length === 0) {
+        fs.rmdir(folderPath, (err) => {
+          if (err) {
+            console.error("Wystąpił błąd podczas usuwania folderu:", err);
+            return res
+              .status(500)
+              .json({ error: "Wystąpił błąd podczas usuwania folderu." });
+          }
+        });
+      }
+
+      res.json({ message: "Plik został pomyślnie usunięty." });
+    });
   });
+
+  // const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
+  // const fileName = req.query.fileName;
+
+  // const filePath = `backend/uploads/${folder}/${fileName}`;
+
+  // const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
+  // const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
+
+  // if (apiKey !== validApiKey) {
+  //   return res.status(401).json({ error: "Nieprawidłowy klucz API." });
+  // }
+
+  // fs.unlink(filePath, (err) => {
+  //   if (err) {
+  //     console.error("Wystąpił błąd podczas usuwania pliku:", err);
+  //     res.status(500).json({ error: "Wystąpił błąd podczas usuwania pliku." });
+  //   } else {
+  //     res.json({ message: "Plik został pomyślnie usunięty." });
+  //   }
+  // });
 };
 
 export const getFilesStrukture = async (req, res) => {
