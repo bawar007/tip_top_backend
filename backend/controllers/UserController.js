@@ -185,12 +185,7 @@ export const deleteOpinion = async (req, res) => {
 };
 
 export const deleteFiles = async (req, res) => {
-  const folder = req.query.s || "default";
-  const fileName = req.query.fileName;
-
-  const filePath = `backend/uploads/${folder}/${fileName}`;
-  const folderPath = `backend/uploads/${folder}`;
-
+  const folders = req.body.filesToDelete || [];
   const apiKey = req.headers.authorization.split(" ")[1];
   const validApiKey = process.env.API_KEY;
 
@@ -198,59 +193,28 @@ export const deleteFiles = async (req, res) => {
     return res.status(401).json({ error: "Nieprawidłowy klucz API." });
   }
 
-  fs.unlink(filePath, (err) => {
-    if (err) {
-      console.error("Wystąpił błąd podczas usuwania pliku:", err);
-      return res
-        .status(500)
-        .json({ error: "Wystąpił błąd podczas usuwania pliku." });
-    }
+  try {
+    // Usuń wybrane pliki w każdym z folderów
+    await folders.map(async (folder) => {
+      const folderPath = `backend/uploads/${folder.folderName}`;
 
-    // Check if the folder is empty
-    fs.readdir(folderPath, (err, files) => {
-      if (err) {
-        console.error("Wystąpił błąd podczas sprawdzania folderu:", err);
-        return res
-          .status(500)
-          .json({ error: "Wystąpił błąd podczas sprawdzania folderu." });
-      }
-
-      // If the folder is empty, remove it
-      if (files.length === 0) {
-        fs.rmdir(folderPath, (err) => {
+      folder.filesFromFolder.map(async (fileName) => {
+        fs.unlink(`${folderPath}/${fileName}`, (err) => {
           if (err) {
-            console.error("Wystąpił błąd podczas usuwania folderu:", err);
+            console.error("Wystąpił błąd podczas usuwania pliku:", err);
             return res
               .status(500)
-              .json({ error: "Wystąpił błąd podczas usuwania folderu." });
+              .json({ error: "Wystąpił błąd podczas usuwania pliku." });
           }
         });
-      }
-
-      res.json({ message: "Plik został pomyślnie usunięty." });
+      });
     });
-  });
 
-  // const folder = req.query.s || "default"; // Odczytaj wartość parametru "s" z URL, jeśli nie ma, użyj domyślnego folderu
-  // const fileName = req.query.fileName;
-
-  // const filePath = `backend/uploads/${folder}/${fileName}`;
-
-  // const apiKey = req.headers.authorization.split(" ")[1]; // Pobierz klucz API z nagłówka
-  // const validApiKey = process.env.API_KEY; // Pobierz prawidłowy klucz API z pliku .env
-
-  // if (apiKey !== validApiKey) {
-  //   return res.status(401).json({ error: "Nieprawidłowy klucz API." });
-  // }
-
-  // fs.unlink(filePath, (err) => {
-  //   if (err) {
-  //     console.error("Wystąpił błąd podczas usuwania pliku:", err);
-  //     res.status(500).json({ error: "Wystąpił błąd podczas usuwania pliku." });
-  //   } else {
-  //     res.json({ message: "Plik został pomyślnie usunięty." });
-  //   }
-  // });
+    res.json({ message: "Pliki zostały pomyślnie usunięte." });
+  } catch (err) {
+    console.error("Wystąpił błąd podczas usuwania plików:", err);
+    res.status(500).json({ error: "Wystąpił błąd podczas usuwania plików." });
+  }
 };
 
 export const getFilesStrukture = async (req, res) => {
@@ -268,11 +232,17 @@ export const getFilesStrukture = async (req, res) => {
       return res.status(500).json({ error: "Wystąpił błąd serwera." });
     }
 
-    const filesData = folders.map((folder) => {
-      const folderPath = path.join(uploadsPath, folder);
-      const files = fs.readdirSync(folderPath);
-      return { name: folder, table: files };
-    });
+    const filesData = folders
+      .map((folder) => {
+        const folderPath = path.join(uploadsPath, folder);
+        const files = fs.readdirSync(folderPath);
+        if (files.length === 0) {
+          fs.rmdirSync(folderPath);
+          return null; // Pomijaj pusty folder
+        }
+        return { name: folder, table: files };
+      })
+      .filter((data) => data !== null);
 
     res.json({ files: filesData });
   });

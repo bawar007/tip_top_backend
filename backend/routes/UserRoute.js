@@ -23,7 +23,7 @@ router.get("/verify", verifyUser);
 router.patch("/opinions/:id", updateOpinion);
 router.delete("/opinions/:id", deleteOpinion);
 
-router.delete("/delete", deleteFiles);
+router.post("/delete", deleteFiles);
 router.get("/files", getFilesStrukture);
 router.post("/upload", handleUpload);
 router.post("/uploadmini", handleUploadMini);
