@@ -1,9 +1,6 @@
 const express = require("express");
 const UserController = require("../controllers/UserController.js");
 
-const getUser = UserController.getUser;
-const createUser = UserController.createUser;
-
 const app = express();
 app.use(express.json());
 
@@ -15,7 +12,9 @@ app.listen(PORT, () => {
 
 const router = express.Router();
 
-router.get("/user", getUser);
-router.post("/user", createUser);
+router.get("/user", UserController.getUser);
+router.post("/userCreate", UserController.createUser);
+router.post("/login", UserController.heckLogin);
+router.post("/marker", UserController.createMarker);
 
 module.exports = router;

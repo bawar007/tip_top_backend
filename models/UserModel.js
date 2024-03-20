@@ -68,7 +68,7 @@ const Markers = db.define(
 Users.hasMany(Markers, { foreignKey: "user_id" });
 Markers.belongsTo(Users, { foreignKey: "user_id" });
 
-Reports.hasMany(Markers, { foreignKey: "report_id" });
-Markers.belongsTo(Reports, { foreignKey: "report_id" });
+Reports.hasMany(Markers, { foreignKey: "marker_id" });
+Markers.belongsTo(Reports, { foreignKey: "marker_id" });
 
 module.exports = { Users, Reports, Markers };
