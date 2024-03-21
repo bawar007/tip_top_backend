@@ -1,5 +1,5 @@
 const { Users, Markers, Reports } = require("../models/UserModel.js");
-const { Op, sequelize } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 
 const getUser = async (req, res) => {
   try {
@@ -87,20 +87,26 @@ const createMarker = async (req, res) => {
       return res.status(404).json({ error: "Użytkownik nie istnieje." });
     }
 
+    console.log(date_createMarker);
+
     const radiusInMeters = 1000; // Zakładamy promień 1000 metrów
 
     // Wyszukujemy markery, które znajdują się w określonej odległości od punktu referencyjnego
-    const nearbyMarker = await Markers.findAll({
-      where: {
-        latitude: { [Op.overlap]: [latitude - 1, latitude + 1] },
-      },
+    const nearbyMarker = await Markers.findOne({
+      where: Sequelize.where(
+        Sequelize.fn(
+          "ST_Distance_Sphere",
+          Sequelize.col("location"),
+          Sequelize.fn("ST_GeomFromText", `POINT(${longitude} ${latitude})`)
+        ),
+        "<=",
+        radiusInMeters
+      ),
+      status: "active",
     });
 
-    console.log(nearbyMarker);
-
-    if (nearbyMarker.length) {
-      // Jeśli znaleziono inny marker o zbliżonej lokalizacji, zaktualizuj go
-      await nearbyMarker[0].update({
+    if (nearbyMarker) {
+      const newMarker = await Markers.create({
         latitude,
         longitude,
         threats,
@@ -108,7 +114,36 @@ const createMarker = async (req, res) => {
         user_id,
         date_createMarker,
         status,
+        location: Sequelize.literal(`POINT(${longitude}, ${latitude})`),
       });
+
+      const updatedMarker = await Markers.findOne({
+        where: {
+          user_id: user_id,
+          status: "active",
+        },
+      });
+
+      if (updatedMarker) {
+        updatedMarker.update({
+          status: "archive",
+        });
+      }
+
+      const reportAlertOld = await Reports.findOne({
+        where: {
+          marker_id: nearbyMarker.marker_id,
+        },
+      });
+
+      if (reportAlertOld) {
+        reportAlertOld.update({
+          marker_id: newMarker.marker_id,
+          number_of_reports: reportAlertOld.number_of_reports + 1,
+          last_updateTime: newMarker.date_createMarker,
+        });
+      }
+
       return res
         .status(200)
         .json({ message: "Zaktualizowano istniejący marker." });
@@ -121,9 +156,14 @@ const createMarker = async (req, res) => {
         user_id,
         date_createMarker,
         status,
+        location: Sequelize.literal(`POINT(${longitude}, ${latitude})`),
       });
 
-      // // Sprawdź, czy istnieje marker w tabeli Reports o podanej lokalizacji
+      await Reports.create({
+        marker_id: newMarker.marker_id,
+        last_updateTime: newMarker.date_createAccount,
+        number_of_reports: 1,
+      });
 
       // Zwróć utworzony marker
       res.status(201).json(newMarker);
@@ -134,4 +174,27 @@ const createMarker = async (req, res) => {
   }
 };
 
-module.exports = { getUser, createUser, heckLogin, createMarker };
+const getMarkersInReports = async (req, res) => {
+  try {
+    // Znajdź wszystkie raporty z markerami
+    const reportsWithMarkers = await Reports.findAll({
+      include: [{ model: Markers }], // Relacja między raportami a markerami
+    });
+
+    // Zbierz wszystkie markery z raportów
+    const markers = reportsWithMarkers;
+
+    res.status(200).json(markers);
+  } catch (error) {
+    console.error("Błąd podczas pobierania markerów:", error);
+    throw error;
+  }
+};
+
+module.exports = {
+  getUser,
+  createUser,
+  heckLogin,
+  createMarker,
+  getMarkersInReports,
+};

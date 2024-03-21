@@ -34,7 +34,7 @@ const Reports = db.define(
       autoIncrement: true,
     },
     last_updateTime: DataTypes.DATE,
-    numer_of_report: DataTypes.INTEGER,
+    number_of_reports: DataTypes.INTEGER,
     marker_id: DataTypes.INTEGER,
   },
   {
@@ -58,6 +58,7 @@ const Markers = db.define(
     date_createMarker: DataTypes.DATE,
     status: DataTypes.STRING,
     user_id: DataTypes.INTEGER,
+    location: DataTypes.GEOMETRY("POINT"),
   },
   {
     freezeTableName: true,
@@ -68,7 +69,7 @@ const Markers = db.define(
 Users.hasMany(Markers, { foreignKey: "user_id" });
 Markers.belongsTo(Users, { foreignKey: "user_id" });
 
-Reports.hasMany(Markers, { foreignKey: "marker_id" });
-Markers.belongsTo(Reports, { foreignKey: "marker_id" });
+Reports.belongsTo(Markers, { foreignKey: "marker_id" });
+// Markers.belongsTo(Reports, { foreignKey: "marker_id" });
 
 module.exports = { Users, Reports, Markers };
