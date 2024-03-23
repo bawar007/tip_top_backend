@@ -87,9 +87,8 @@ const createMarker = async (req, res) => {
       return res.status(404).json({ error: "Użytkownik nie istnieje." });
     }
 
-    console.log(date_createMarker);
-
     const radiusInMeters = 1000; // Zakładamy promień 1000 metrów
+    const threats_json = JSON.stringify(threats);
 
     // Wyszukujemy markery, które znajdują się w określonej odległości od punktu referencyjnego
     const nearbyMarker = await Markers.findOne({
@@ -109,7 +108,7 @@ const createMarker = async (req, res) => {
       const newMarker = await Markers.create({
         latitude,
         longitude,
-        threats,
+        threats: threats_json,
         description,
         user_id,
         date_createMarker,
@@ -151,7 +150,7 @@ const createMarker = async (req, res) => {
       const newMarker = await Markers.create({
         latitude,
         longitude,
-        threats,
+        threats: threats_json,
         description,
         user_id,
         date_createMarker,
@@ -190,6 +189,27 @@ const getMarkersInReports = async (req, res) => {
     throw error;
   }
 };
+
+async function deleteOldRecords() {
+  try {
+    const oneHalfHourAgo = new Date(Date.now() - 1800000);
+
+    const deletedRows = await Reports.destroy({
+      where: {
+        last_updateTime: {
+          [Sequelize.Op.lt]: oneHalfHourAgo,
+        },
+      },
+    });
+
+    console.log(`Usunięto ${deletedRows} nieaktualizowanych wpisów.`);
+  } catch (error) {
+    console.error("Błąd podczas usuwania nieaktualizowanych wpisów:", error);
+  }
+}
+
+// Uruchomienie funkcji usuwającej co godzinę
+setInterval(deleteOldRecords, 600000);
 
 module.exports = {
   getUser,
