@@ -7,6 +7,7 @@ const {
 const { Op, Sequelize, where } = require("sequelize");
 const jwt = require("jsonwebtoken");
 const { verifyToken } = require("../controllers/VerifyToken.js");
+const bcrypt = require("bcrypt");
 
 const getUser = async (req, res) => {
   try {
@@ -31,9 +32,12 @@ const createUser = async (req, res) => {
     } = req.body;
 
     // Stwórz nowego użytkownika w bazie danych
+
+    const hashPassword = bcrypt.hashSync(password, 10);
+
     const newUser = await Users.create({
       user_name,
-      password,
+      password: hashPassword,
       email,
       first_name,
       second_name,
@@ -59,8 +63,9 @@ const heckLogin = async (req, res) => {
     // Znajdź użytkownika o podanym loginie
     const user = await Users.findOne({ where: { user_name } });
 
-    // Sprawdź, czy użytkownik istnieje i czy hasło się zgadza
-    if (user && user.password === password) {
+    const heckPassword = bcrypt.compareSync(password, user.password);
+
+    if (heckPassword) {
       const tokenValue = jwt.sign(
         { user_id: user.user_id },
         process.env.JWT_SECRET,
@@ -70,11 +75,11 @@ const heckLogin = async (req, res) => {
       );
 
       // Save the access token to the database
-      const findAccessById = AccessToken.findOne({
+      const findAccessById = await AccessToken.findOne({
         where: { user_id: user.user_id },
       });
       if (findAccessById) {
-        AccessToken.update(
+        await AccessToken.update(
           {
             accessToken: tokenValue,
           },
@@ -85,7 +90,7 @@ const heckLogin = async (req, res) => {
           }
         );
       } else {
-        AccessToken.create({
+        await AccessToken.create({
           accessToken: tokenValue,
           user_id: user.user_id,
         });
@@ -230,6 +235,8 @@ const createMarker = async (req, res) => {
           // Wyszukujemy markery, które znajdują się w określonej odległości od punktu referencyjnego
 
           const nearbyMarker = await findNerbyMarker(longitude, latitude);
+
+          console.log(nearbyMarker);
 
           if (nearbyMarker) {
             // Jeśli istnieje pobliski marker, aktualizuj istniejący marker i raport
