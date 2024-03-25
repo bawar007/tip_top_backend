@@ -66,10 +66,28 @@ const Markers = db.define(
   }
 );
 
+const AccessToken = db.define(
+  "accesToken",
+  {
+    access_id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    user_id: DataTypes.INTEGER,
+    accessToken: DataTypes.INTEGER,
+    scope: DataTypes.TEXT,
+  },
+  {
+    freezeTableName: true,
+    timestamps: false,
+  }
+);
+
 Users.hasMany(Markers, { foreignKey: "user_id" });
 Markers.belongsTo(Users, { foreignKey: "user_id" });
 
 Reports.belongsTo(Markers, { foreignKey: "marker_id" });
 // Markers.belongsTo(Reports, { foreignKey: "marker_id" });
 
-module.exports = { Users, Reports, Markers };
+module.exports = { Users, Reports, Markers, AccessToken };
