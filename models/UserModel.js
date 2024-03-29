@@ -17,7 +17,6 @@ const Users = db.define(
     first_name: DataTypes.STRING,
     second_name: DataTypes.STRING,
     date_createAccount: DataTypes.DATE,
-    accesToken: DataTypes.STRING,
   },
   {
     freezeTableName: true,
@@ -87,7 +86,10 @@ const AccessToken = db.define(
 Users.hasMany(Markers, { foreignKey: "user_id" });
 Markers.belongsTo(Users, { foreignKey: "user_id" });
 
+AccessToken.hasOne(Users, { foreignKey: "user_id" });
+Users.belongsTo(AccessToken, { foreignKey: "user_id" });
+
+Markers.hasOne(Reports, { foreignKey: "marker_id" });
 Reports.belongsTo(Markers, { foreignKey: "marker_id" });
-// Markers.belongsTo(Reports, { foreignKey: "marker_id" });
 
 module.exports = { Users, Reports, Markers, AccessToken };
