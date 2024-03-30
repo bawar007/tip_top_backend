@@ -55,6 +55,7 @@ const Markers = db.define(
     threats: DataTypes.STRING,
     description: DataTypes.STRING,
     date_createMarker: DataTypes.DATE,
+    localDateTime: DataTypes.STRING,
     status: DataTypes.STRING,
     user_id: DataTypes.INTEGER,
     location: DataTypes.GEOMETRY("POINT"),

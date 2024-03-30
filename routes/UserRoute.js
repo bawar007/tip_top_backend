@@ -6,10 +6,10 @@ const MapController = require("../controllers/MapController.js");
 
 const router = express.Router();
 
-router.get("/user", UserController.getUser);
 router.post("/userCreate", UserController.createUser);
 router.post("/login", UserController.heckLogin);
 router.post("/marker", MapController.createMarker);
 router.get("/reports", MapController.getMarkersInReports);
+router.get("/threats", MapController.getThreats);
 
 module.exports = router;

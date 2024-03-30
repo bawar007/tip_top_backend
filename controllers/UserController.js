@@ -2,15 +2,6 @@ const { Users, AccessToken } = require("../models/UserModel.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const getUser = async (req, res) => {
-  try {
-    const response = await Users.findAll();
-    res.status(200).json(response);
-  } catch (err) {
-    console.error(err.message);
-  }
-};
-
 const createUser = async (req, res) => {
   try {
     // Pobierz dane o użytkowniku z ciała żądania
@@ -111,7 +102,6 @@ const heckLogin = async (req, res) => {
 };
 
 module.exports = {
-  getUser,
   createUser,
   heckLogin,
 };

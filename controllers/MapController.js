@@ -9,8 +9,10 @@ const createNewMarkerAndReport = async (
   description,
   user_id,
   date_createMarker,
+
   status
 ) => {
+  const localDateTime = new Date().toLocaleTimeString();
   const newMarker = await Markers.create({
     latitude,
     longitude,
@@ -18,6 +20,7 @@ const createNewMarkerAndReport = async (
     description,
     user_id,
     date_createMarker,
+    localDateTime: `${localDateTime}`,
     status,
     location: Sequelize.literal(`POINT(${longitude}, ${latitude})`),
   });
@@ -39,6 +42,7 @@ const updateOldMarkerAndUpdateReport = async (
   status,
   nearbyMarker
 ) => {
+  const localDateTime = new Date().toLocaleDateString();
   const newMarker = await Markers.create({
     latitude,
     longitude,
@@ -46,6 +50,7 @@ const updateOldMarkerAndUpdateReport = async (
     description,
     user_id,
     date_createMarker,
+    localDateTime: `${localDateTime}`,
     status,
     location: Sequelize.literal(`POINT(${longitude}, ${latitude})`),
   });
@@ -205,7 +210,7 @@ const getMarkersInReports = async (req, res) => {
 
 async function deleteOldRecords() {
   try {
-    const oneHalfHourAgo = new Date(Date.now() + 1800000);
+    const oneHalfHourAgo = new Date(Date.now() - 1800000);
 
     const deletedRows = await Reports.destroy({
       where: {
@@ -234,10 +239,58 @@ async function deleteOldRecords() {
   }
 }
 
-// Uruchomienie funkcji usuwającej co godzinę
-setInterval(deleteOldRecords, 600000);
+const getThreats = async (req, res) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader.split(" ")[1];
+  try {
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: "Nieprawidłowy token" });
+      } else {
+        const userWithAccess = await AccessToken.findOne({
+          where: {
+            accessToken: token,
+            user_id: decoded.user_id,
+          },
+        });
+        if (!userWithAccess) {
+          return res.status(403).json({ error: "Brak dostępu" });
+        } else {
+          // Znajdź wszystkie zagrożenia
+          const { lat, lng } = req.query;
+          const radiusInMeters = 20000;
+          const nerbyThreats = await Markers.findAll({
+            where: {
+              [Sequelize.Op.and]: [
+                Sequelize.where(
+                  Sequelize.fn(
+                    "ST_Distance_Sphere",
+                    Sequelize.col("location"),
+                    Sequelize.fn("ST_GeomFromText", `POINT(${lng} ${lat})`)
+                  ),
+                  "<=",
+                  radiusInMeters
+                ),
+                { status: "active" }, // Dodajemy sprawdzenie statusu
+              ],
+            },
+          });
+
+          return res.status(200).json(nerbyThreats);
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Błąd podczas pobierania markerów:", error);
+    throw error;
+  }
+};
+
+// Uruchomienie funkcji usuwającej co minute
+setInterval(deleteOldRecords, 60000);
 
 module.exports = {
   createMarker,
   getMarkersInReports,
+  getThreats,
 };
